@@ -1,10 +1,3 @@
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -15,7 +8,12 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
-
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 
 public class LDAPAuthentication implements Serializable {
@@ -41,10 +39,10 @@ public class LDAPAuthentication implements Serializable {
         this.pswd = pswd;
     }
 
-    public LDAPAuthentication(String uid, String pswd,String uidField) {
+    public LDAPAuthentication(String uid, String pswd, String uidField) {
         this.uid = uid;
         this.pswd = pswd;
-        this.uidField = (uidField==null) ? "cn":uidField;
+        this.uidField = (uidField == null) ? "cn" : uidField;
     }
 
 
@@ -54,9 +52,9 @@ public class LDAPAuthentication implements Serializable {
      * @param
      */
 
-    public boolean ldapConnect(String url, String userName, String password,Boolean ssl) {
+    public boolean ldapConnect(String url, String userName, String password, Boolean ssl) {
         boolean result = false;
-        Hashtable<String, String> env = getEnv(url, userName, password,ssl);
+        Hashtable<String, String> env = getEnv(url, userName, password, ssl);
         try {
             this.ctx = new InitialLdapContext(env, connCtls);
 
@@ -73,7 +71,7 @@ public class LDAPAuthentication implements Serializable {
      * @param
      * @return
      */
-    public Hashtable<String, String> getEnv(String url, String userName, String password,Boolean ssl) {
+    public Hashtable<String, String> getEnv(String url, String userName, String password, Boolean ssl) {
         Hashtable<String, String> env = new Hashtable<String, String>();
         //完整的ldap路径
         String providerUrl = url;
@@ -83,7 +81,7 @@ public class LDAPAuthentication implements Serializable {
         env.put(Context.SECURITY_AUTHENTICATION, LdapConstat.SECURITY_AUTHENTICATION);
         env.put(Context.SECURITY_PRINCIPAL, userName);    //cn=admin,dc=yfb,dc=sunline,dc=cn
         env.put(Context.SECURITY_CREDENTIALS, password);
-        if(ssl){
+        if (ssl) {
             env.put(Context.REFERRAL, "ignore");
             env.put(Context.SECURITY_PROTOCOL, "ssl");
             env.put("java.naming.ldap.factory.socket", "cn.sunline.edsp.loader.common.ldap.DummySSLSocketFactory");
@@ -95,9 +93,9 @@ public class LDAPAuthentication implements Serializable {
     /**
      * 根据uid查询UserDN
      */
-    public String getUserDN(String uid, String url, String userName, String password, String baseDN,Boolean ssl) {
+    public String getUserDN(String uid, String url, String userName, String password, String baseDN, Boolean ssl) {
         StringBuilder userDN = new StringBuilder();
-        boolean flag = ldapConnect(url, userName, password,ssl);
+        boolean flag = ldapConnect(url, userName, password, ssl);
         if (!flag) {
             System.out.println("失败");
         }
@@ -105,7 +103,7 @@ public class LDAPAuthentication implements Serializable {
             String baseDn = baseDN;
             SearchControls constraints = new SearchControls();
             constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            NamingEnumeration<SearchResult> en = this.ctx.search(baseDn, "("+uidField+"="+uid+")", constraints);
+            NamingEnumeration<SearchResult> en = this.ctx.search(baseDn, "(" + uidField + "=" + uid + ")", constraints);
             if (en == null || !en.hasMoreElements()) {
                 //logger.warn("未找到用户{}", uid);
 
@@ -117,10 +115,10 @@ public class LDAPAuthentication implements Serializable {
                 if (obj instanceof SearchResult) {
                     SearchResult si = (SearchResult) obj;
                     userDN.append(si.getName());
-                    userDN.append( "," + baseDn);
+                    userDN.append("," + baseDn);
                 }
             }
-            return  userDN.toString();
+            return userDN.toString();
         } catch (Exception e) {
             e.getStackTrace();
             System.out.println(e.getMessage());
@@ -128,13 +126,13 @@ public class LDAPAuthentication implements Serializable {
         return userDN.toString();
     }
 
-    public boolean authenricate(String url, String userName, String password, String baseDN,Boolean ssl) {
+    public boolean authenricate(String url, String userName, String password, String baseDN, Boolean ssl) {
         boolean valide = false;
         String userDN = "";
         try {
-            userDN = getUserDN(this.uid, url, userName, password, baseDN,ssl);
+            userDN = getUserDN(this.uid, url, userName, password, baseDN, ssl);
             if (userDN.equals(null)) {
-                System.out.println("userDN:{"+userDN+"}");
+                System.out.println("userDN:{" + userDN + "}");
                 ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, userDN);
                 ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, this.pswd);
                 ctx.reconnect(connCtls);
@@ -163,7 +161,7 @@ public class LDAPAuthentication implements Serializable {
 
     public List<Map<String, String>> getUser(String url, String userName, String password, LdapUser ldap) {
         List<Map<String, String>> results = new ArrayList<Map<String, String>>();
-        boolean flag = ldapConnect(url, userName, password,ldap.getLDAP_PROTOCOL());
+        boolean flag = ldapConnect(url, userName, password, ldap.getLDAP_PROTOCOL());
         if (!flag) {
             return results;
         }
@@ -171,7 +169,7 @@ public class LDAPAuthentication implements Serializable {
             if (ctx != null) {
                 SearchControls searchCtls = new SearchControls();
                 searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-                String searchFilter = ldap.getLDAP_SYNC_USER_OBJECT_FILTER() ;
+                String searchFilter = ldap.getLDAP_SYNC_USER_OBJECT_FILTER();
                 String searchBase = ldap.getLDAP_BASE_DN();
                 NamingEnumeration<SearchResult> answer = ctx.search(searchBase, searchFilter, searchCtls);
                 Attributes oAttrs = null;
@@ -192,7 +190,7 @@ public class LDAPAuthentication implements Serializable {
                             String attID = ids.next().toString();
                             String attValue = getLdapValue(oAttrs, attID);
                             result.put(attID, attValue);
-                            System.out.println("{"+attID+"}={"+attValue+"}");
+                            System.out.println("{" + attID + "}={" + attValue + "}");
                         }
                         results.add(result);
                     }
@@ -213,9 +211,9 @@ public class LDAPAuthentication implements Serializable {
     }
 
 
-    public  String getLdapValue(Attributes oAttrs, String proname)
+    public String getLdapValue(Attributes oAttrs, String proname)
             throws NamingException {
-        String result ="";
+        String result = "";
         Attribute attrpro = oAttrs.get(proname);
         if (attrpro == null) {
             return result;
@@ -223,7 +221,7 @@ public class LDAPAuthentication implements Serializable {
         NamingEnumeration<?> attrpros = attrpro.getAll();
         try {
             while (attrpros.hasMore()) {
-                return attrpros.next()+"";
+                return attrpros.next() + "";
             }
         } catch (NamingException e) {
             System.out.println(e.getMessage());
